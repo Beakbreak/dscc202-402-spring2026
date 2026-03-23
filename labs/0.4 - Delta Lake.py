@@ -163,7 +163,7 @@ display(trips_df.limit(10))
 (trips_df
  .write
  .format("delta")  # Delta format
- .mode("append")  # Write mode
+ .mode("overwrite")  # Write mode
  .save(f"{working_dir}/taxi_trips_delta")
 )
 
@@ -221,7 +221,7 @@ except Exception as e:
  .write
  .format("delta")  # Delta format
  .mode("append")  # Append mode
- .option("mergeSchema", "true")  # Option name and value for schema merging
+ .option("mergeSchema", True)  # Option name and value for schema merging
  .save(f"{working_dir}/taxi_trips_delta")
 )
 
@@ -269,7 +269,7 @@ transformed_df.printSchema()
  .write
  .format("delta")  # Delta format
  .mode("overwrite")  # Overwrite mode
- .option("overwriteSchema","true")  # Option for schema overwrite
+ .option("overwriteSchema",True)  # Option for schema overwrite
  .save(f"{working_dir}/taxi_trips_delta")
 )
 
@@ -859,9 +859,11 @@ def upsert_to_gold(batch_df, batch_id):
             target.pickup_zip = source.pickup_zip AND
             target.dropoff_zip = source.dropoff_zip
         WHEN MATCHED THEN
-            UPDATE SET 
+            UPDATE SET
+            target.tpep_dropoff_datetime = source.tpep_dropoff_datetime,
             target.trip_distance = source.trip_distance,
             target.fare_amount = source.fare_amount
+        
         WHEN NOT MATCHED THEN
             INSERT (
                 tpep_pickup_datetime, tpep_dropoff_datetime,
@@ -878,14 +880,14 @@ def upsert_to_gold(batch_df, batch_id):
 # Apply foreachBatch to streaming pipeline
 # Note: Cast timestamps from string to timestamp type
 gold_query = (spark.readStream
-    .format("delta")  # Delta format
+    .format( "delta")  # Delta format
     .load(f"{working_dir}/bronze_taxi_trips")
     .withColumn("tpep_pickup_datetime", to_timestamp(col("tpep_pickup_datetime")))
     .withColumn("tpep_dropoff_datetime", to_timestamp(col("tpep_dropoff_datetime")))
     .writeStream
-    .foreachBatch(upsert_to_gold)  # Function name for batch processing
+    .foreachBatch( upsert_to_gold)  # Function name for batch processing
     .option("checkpointLocation", f"{checkpoint_dir}/gold")
-    .trigger(availableNow=True)  # availableNow=True
+    .trigger( availableNow=True)  # availableNow=True
     .start()
 )
 
