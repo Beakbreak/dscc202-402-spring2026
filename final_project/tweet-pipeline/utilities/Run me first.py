@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %sql
 # MAGIC DROP VOLUME IF EXISTS workspace.default.checkpoints;
 # MAGIC
@@ -98,6 +102,7 @@ print(f"=" * 70)
 
 # COMMAND ----------
 
+print(UC_MODEL_NAME)
 # Verify model is registered in Unity Catalog
 client = MlflowClient()
 try:
@@ -137,3 +142,7 @@ mlflow.models.predict(
     input_data=input_data,
     env_manager="uv",
 )
+
+# COMMAND ----------
+
+

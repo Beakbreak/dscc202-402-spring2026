@@ -1,0 +1,118 @@
+{
+  "datasets": [
+    {
+      "name": "15448e97",
+      "displayName": "Tweets Containing Mentions Count Summary",
+      "queryLines": [
+        "-- 2. Tweets with Mentions Counter\r\n",
+        "SELECT COUNT(*) AS tweets_with_mentions\r\n",
+        "FROM tweets_silver\r\n",
+        "WHERE mention IS NOT NULL;"
+      ]
+    },
+    {
+      "name": "5e12afa4",
+      "displayName": "Aggregate Count of All Tweets Dataset",
+      "queryLines": [
+        "-- 1. Total Tweets Counter\r\n",
+        "SELECT COUNT(*) AS total_tweets\r\n",
+        "FROM tweets_gold;"
+      ]
+    },
+    {
+      "name": "fcdc0f66",
+      "displayName": "tweets Missing Mentions Count Summary",
+      "queryLines": [
+        "-- 3. Tweets without Mentions Counter\r\n",
+        "SELECT COUNT(*) AS tweets_without_mentions\r\n",
+        "FROM tweets_silver\r\n",
+        "WHERE mention IS NULL;"
+      ]
+    },
+    {
+      "name": "39ab1cde",
+      "displayName": "Top Engagers by Tweet Volume",
+      "queryLines": [
+        "-- 4. Top 10 Users by Tweet Count\r\n",
+        "-- Replace `user` with your actual username column if different\r\n",
+        "SELECT\r\n",
+        "    user,\r\n",
+        "    COUNT(*) AS tweet_count\r\n",
+        "FROM tweets_bronze\r\n",
+        "GROUP BY user\r\n",
+        "ORDER BY tweet_count DESC\r\n",
+        "LIMIT 10;"
+      ]
+    },
+    {
+      "name": "c6ef5f4b",
+      "displayName": "Top Mentions by Net Positive Sentiment Score",
+      "queryLines": [
+        "SELECT\r\n",
+        "    mention,\r\n",
+        "    SUM(CASE WHEN predicted_sentiment = 'positive' THEN 1 ELSE 0 END) -\r\n",
+        "    SUM(CASE WHEN predicted_sentiment = 'negative' THEN 1 ELSE 0 END) AS net_positive_score\r\n",
+        "FROM tweets_gold\r\n",
+        "WHERE mention IS NOT NULL\r\n",
+        "GROUP BY mention\r\n",
+        "HAVING net_positive_score > 0\r\n",
+        "ORDER BY net_positive_score DESC\r\n",
+        "LIMIT 10;"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "b3ed992b",
+      "displayName": "Untitled page",
+      "layout": [
+        {
+          "widget": {
+            "name": "4d6d45f8",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "5e12afa4",
+                  "fields": [
+                    {
+                      "name": "sum(total_tweets)",
+                      "expression": "SUM(`total_tweets`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(total_tweets)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 3,
+            "height": 3
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
