@@ -1,8 +1,4 @@
 # Databricks notebook source
-# MAGIC %pip install transformers==4.35.2 torch torchvision --quiet
-
-# COMMAND ----------
-
 # MAGIC %md
 # MAGIC # Gold Layer: ML Inference for Sentiment Prediction
 # MAGIC
@@ -84,7 +80,7 @@ mlflow.set_registry_uri("databricks-uc")
 # COMMAND ----------
 
 # TODO: Define model output schema
-model_schema = StructType([
+model_out_schema = StructType([
     StructField("label", StringType(), True),
     StructField("score", DoubleType(), True)
 ])
@@ -105,10 +101,10 @@ model_schema = StructType([
 # TODO: Load model and create Spark UDF
 model_uri = "models:/workspace.default.small_sentiment_model/1"
 
-model_udf = mlflow.pyfunc.spark_udf(
+pred_udf = mlflow.pyfunc.spark_udf(
     spark,
     model_uri,
-    result_type=model_schema
+    model_out_schema
 )
 
 # COMMAND ----------
@@ -133,23 +129,22 @@ model_udf = mlflow.pyfunc.spark_udf(
 
 # COMMAND ----------
 
-# TODO: Define append_flow function for gold transformation
+from pyspark.sql.functions import col, when, lower
+
 @dp.append_flow(target="tweets_gold")
 def gold_transform():
 
-    df = spark.readStream.table("tweets_silver")
+    df = (
+        spark.readStream
+        .table("tweets_silver")
+        .repartition(16)   # try 8, 16, 32; start with 16
+    )
 
-    return (
+    pred_df = (
         df
-        .withColumn("prediction", model_udf(col("cleaned_text")))
-        .withColumn("predicted_label", col("prediction.label"))
+        .withColumn("prediction", pred_udf(col("cleaned_text")))
+        .withColumn("predicted_sentiment", lower(col("prediction.label")))
         .withColumn("predicted_score", col("prediction.score") * 100)
-        .withColumn(
-            "predicted_sentiment",
-            when(col("predicted_label") == "NEGATIVE", "negative")
-            .when(col("predicted_label") == "POSITIVE", "positive")
-            .otherwise(None)
-        )
         .withColumn(
             "sentiment_id",
             when(col("sentiment") == "0", 0)
@@ -168,12 +163,14 @@ def gold_transform():
             "cleaned_text",
             "text",
             "sentiment",
-            "predicted_sentiment",
             "predicted_score",
+            "predicted_sentiment",
             "sentiment_id",
             "predicted_sentiment_id"
         )
     )
+
+    return pred_df
 
 # COMMAND ----------
 

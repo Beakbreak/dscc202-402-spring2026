@@ -30,7 +30,19 @@
 # - delta.tables.DeltaTable
 # - matplotlib.pyplot
 # - sklearn.metrics (confusion_matrix, classification_report, ConfusionMatrixDisplay)
-
+# PySpark SQL functions
+from pyspark.sql import functions as F
+from pyspark.sql.functions import col, lower, when, count, lit
+import pandas as pd
+import mlflow
+from mlflow.tracking import MlflowClient
+from delta.tables import DeltaTable
+import matplotlib.pyplot as plt
+from sklearn.metrics import (
+    confusion_matrix,
+    classification_report,
+    ConfusionMatrixDisplay
+)
 
 # COMMAND ----------
 
@@ -45,7 +57,7 @@
 # COMMAND ----------
 
 # TODO: Load gold table
-
+gold_df = spark.read.table("tweets_gold")
 
 # COMMAND ----------
 
@@ -64,7 +76,22 @@
 # COMMAND ----------
 
 # TODO: Generate classification report
+gold_pdf = gold_df.select(
+    "sentiment_id",
+    "predicted_sentiment_id"
+).dropna().toPandas()
+y_true = gold_pdf["sentiment_id"]
+y_pred = gold_pdf["predicted_sentiment_id"]
+target_names = ["Negative", "Positive"]
+report = classification_report(
+    y_true,
+    y_pred,
+    target_names=target_names,
+    output_dict=True
+)
+report_df = pd.DataFrame(report).transpose()
 
+display(report_df)
 
 # COMMAND ----------
 
@@ -85,7 +112,15 @@
 # COMMAND ----------
 
 # TODO: Create and display confusion matrix
-
+cm = confusion_matrix(y_true, y_pred)
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm,
+    display_labels=["Negative", "Positive"]
+)
+fig, ax = plt.subplots(figsize=(6, 6))
+disp.plot(ax=ax)
+plt.title("Confusion Matrix")
+plt.show()
 
 # COMMAND ----------
 
@@ -110,7 +145,29 @@
 # COMMAND ----------
 
 # TODO: Log metrics and artifacts to MLflow
-
+# Set MLflow registry to Unity Catalog
+mlflow.set_registry_uri("databricks-uc")
+silver_table_name = "workspace.default.tweets_silver"
+silver_delta_version = spark.sql(f"""
+    DESCRIBE HISTORY {silver_table_name}
+""").select("version").first()["version"]
+fig, ax = plt.subplots(figsize=(6, 6))
+disp = ConfusionMatrixDisplay(
+    confusion_matrix=cm,
+    display_labels=["Negative", "Positive"]
+)
+disp.plot(ax=ax)
+plt.title("Confusion Matrix")
+with mlflow.start_run(run_name="tweet_sentiment_evaluation") as run:
+    mlflow.log_metric("accuracy", report["accuracy"])
+    mlflow.log_param("model_name", "workspace.default.tweet_sentiment_model")
+    mlflow.log_param("model_version", 1)
+    mlflow.log_param("silver_delta_version", silver_delta_version)
+    mlflow.log_figure(fig, "confusion_matrix.png")
+plt.close(fig)
+print("Logged MLflow run successfully.")
+print(f"Run ID: {run.info.run_id}")
+print(f"Silver Delta Version: {silver_delta_version}")
 
 # COMMAND ----------
 

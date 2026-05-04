@@ -59,6 +59,22 @@
         "ORDER BY net_positive_score DESC\r\n",
         "LIMIT 10;"
       ]
+    },
+    {
+      "name": "b61e5ba4",
+      "displayName": "Top Ten Mentions By Negative Sentiment Score",
+      "queryLines": [
+        "SELECT\r\n",
+        "    mention,\r\n",
+        "    SUM(CASE WHEN predicted_sentiment = 'negative' THEN 1 ELSE 0 END) -\r\n",
+        "    SUM(CASE WHEN predicted_sentiment = 'positive' THEN 1 ELSE 0 END) AS net_negative_score\r\n",
+        "FROM tweets_gold\r\n",
+        "WHERE mention IS NOT NULL\r\n",
+        "GROUP BY mention\r\n",
+        "HAVING net_negative_score > 0\r\n",
+        "ORDER BY net_negative_score DESC\r\n",
+        "LIMIT 10;"
+      ]
     }
   ],
   "pages": [
@@ -68,7 +84,7 @@
       "layout": [
         {
           "widget": {
-            "name": "4d6d45f8",
+            "name": "total-tweets",
             "queries": [
               {
                 "name": "main_query",
@@ -87,7 +103,10 @@
             "spec": {
               "version": 2,
               "frame": {
-                "showTitle": true
+                "showDescription": false,
+                "title": "Total Tweets",
+                "showTitle": true,
+                "headerAlignment": "center"
               },
               "widgetType": "counter",
               "encodings": {
@@ -100,8 +119,277 @@
           "position": {
             "x": 0,
             "y": 0,
-            "width": 3,
-            "height": 3
+            "width": 2,
+            "height": 4
+          }
+        },
+        {
+          "widget": {
+            "name": "total-tweets-mentions",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "15448e97",
+                  "fields": [
+                    {
+                      "name": "sum(tweets_with_mentions)",
+                      "expression": "SUM(`tweets_with_mentions`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Total tweets with mentions",
+                "headerAlignment": "center"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(tweets_with_mentions)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 4,
+            "width": 2,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "tot1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "fcdc0f66",
+                  "fields": [
+                    {
+                      "name": "sum(tweets_without_mentions)",
+                      "expression": "SUM(`tweets_without_mentions`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Total tweets without mentions",
+                "headerAlignment": "center"
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(tweets_without_mentions)"
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 2,
+            "height": 5
+          }
+        },
+        {
+          "widget": {
+            "name": "top1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "c6ef5f4b",
+                  "fields": [
+                    {
+                      "name": "sum(net_positive_score)",
+                      "expression": "SUM(`net_positive_score`)"
+                    },
+                    {
+                      "name": "mention",
+                      "expression": "`mention`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Top 10 positively mentioned users",
+                "headerAlignment": "center"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(net_positive_score)",
+                  "axis": {
+                    "title": "Net Positive Score"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "mention",
+                  "axis": {
+                    "title": "Mentioned User"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 0,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "top-1",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "b61e5ba4",
+                  "fields": [
+                    {
+                      "name": "sum(net_negative_score)",
+                      "expression": "SUM(`net_negative_score`)"
+                    },
+                    {
+                      "name": "mention",
+                      "expression": "`mention`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Top 10 negatively mentioned users",
+                "headerAlignment": "center"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(net_negative_score)",
+                  "axis": {
+                    "title": "Net Negative Score"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "mention",
+                  "axis": {
+                    "title": "Mentioned USer"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 7,
+            "width": 6,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "top",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "39ab1cde",
+                  "fields": [
+                    {
+                      "name": "sum(tweet_count)",
+                      "expression": "SUM(`tweet_count`)"
+                    },
+                    {
+                      "name": "user",
+                      "expression": "`user`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "showTitle": true,
+                "title": "Top 10 users with most tweets",
+                "headerAlignment": "center"
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "sum(tweet_count)",
+                  "axis": {
+                    "title": "Number of tweets"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "y": {
+                  "fieldName": "user",
+                  "axis": {
+                    "title": "User"
+                  },
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "x-reversed"
+                    }
+                  }
+                },
+                "label": {
+                  "show": false
+                }
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 8,
+            "height": 10
           }
         }
       ],
