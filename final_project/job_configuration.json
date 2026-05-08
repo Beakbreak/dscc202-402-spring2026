@@ -1,0 +1,92 @@
+{
+  "job_id": 386884166134637,
+  "creator_user_name": "namanbhagat1414@gmail.com",
+  "run_as_user_name": "namanbhagat1414@gmail.com",
+  "run_as_owner": true,
+  "settings": {
+    "name": "MorningTweetNews",
+    "email_notifications": {
+      "no_alert_for_skipped_runs": false
+    },
+    "webhook_notifications": {},
+    "timeout_seconds": 0,
+    "schedule": {
+      "quartz_cron_expression": "3 0 2 * * ?",
+      "timezone_id": "UTC",
+      "pause_status": "UNPAUSED"
+    },
+    "max_concurrent_runs": 1,
+    "tasks": [
+      {
+        "task_key": "TwitterAnalyticsProject",
+        "run_if": "ALL_SUCCESS",
+        "pipeline_task": {
+          "pipeline_id": "a9a09e98-9d9d-4246-a2ae-d9727d9dc841",
+          "full_refresh": false
+        },
+        "timeout_seconds": 0,
+        "email_notifications": {
+          "on_success": [
+            "nbhagat2@ur.rochester.edu"
+          ],
+          "on_failure": [
+            "nbhagat2@ur.rochester.edu"
+          ]
+        },
+        "notification_settings": {
+          "no_alert_for_skipped_runs": false,
+          "no_alert_for_canceled_runs": false,
+          "alert_on_last_attempt": false
+        },
+        "webhook_notifications": {},
+        "disabled": false
+      },
+      {
+        "task_key": "Twitter_Dashboard",
+        "depends_on": [
+          {
+            "task_key": "TwitterAnalyticsProject"
+          }
+        ],
+        "run_if": "ALL_SUCCESS",
+        "dashboard_task": {
+          "subscription": {
+            "subscribers": [
+              {
+                "user_name": "namanbhagat1414@gmail.com"
+              }
+            ],
+            "custom_subject": "Today's updates"
+          },
+          "warehouse_id": "673f1235668158e0",
+          "dashboard_id": "01f144e7bb161ba59e44b91e4dc4bdb9"
+        },
+        "timeout_seconds": 0,
+        "email_notifications": {
+          "on_start": [
+            "nbhagat2@ur.rochester.edu"
+          ],
+          "on_success": [
+            "nbhagat2@ur.rochester.edu"
+          ],
+          "on_failure": [
+            "nbhagat2@ur.rochester.edu"
+          ]
+        },
+        "notification_settings": {
+          "no_alert_for_skipped_runs": false,
+          "no_alert_for_canceled_runs": false,
+          "alert_on_last_attempt": false
+        },
+        "webhook_notifications": {},
+        "disabled": false
+      }
+    ],
+    "format": "MULTI_TASK",
+    "queue": {
+      "enabled": true
+    },
+    "performance_target": "PERFORMANCE_OPTIMIZED"
+  },
+  "created_time": 1777589821892
+}
